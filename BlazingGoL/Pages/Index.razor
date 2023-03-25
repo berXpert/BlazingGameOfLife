@@ -1,0 +1,107 @@
+@page "/"
+@using BlazingGoL.Models
+
+<h3>Game of Life</h3>
+
+<div class="grid-container">
+    @for (int i = 0; i < gameOfLife?.Height; i++)
+    {
+        <div class="grid-row">
+            @for (int j = 0; j < gameOfLife?.Width; j++)
+            {
+                int row = i;
+                int col = j;
+                <div class="grid-cell @(gameOfLife.Grid[i, j].IsAlive ? "alive" : "dead")" @onclick="(() => ToggleCellState(row, col))"></div>
+            }
+        </div>
+    }
+</div>
+
+<div>
+    <button @onclick="InitializeGrid">Initialize</button>
+    <button @onclick="StartGame">Start</button>
+    <button @onclick="StopGame">Stop</button>
+</div>
+
+<style>
+    .grid-container {
+        display: inline-grid;
+    }
+
+    .grid-row {
+        display: flex;
+    }
+
+    .grid-cell {
+        width: 10px;
+        height: 10px;
+        border: 1px solid #ccc;
+    }
+
+    .alive {
+        background-color: #000;
+    }
+
+    .dead {
+        background-color: #fff;
+    }
+</style>
+
+@code {
+    private GameOfLife gameOfLife;
+    private Timer timer;
+    private int width = 51;
+    private int height = 51;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await InitializeGrid();
+    }
+
+    private async Task InitializeGrid()
+{
+    gameOfLife = new GameOfLife(width, height);
+
+    // Clear the grid
+    for (int i = 0; i < height; i++)
+    {
+        for (int j = 0; j < width; j++)
+        {
+            gameOfLife.Grid[i, j].IsAlive = false;
+        }
+    }
+
+    // Create a Glider pattern
+    gameOfLife.Grid[2, 1].IsAlive = true;
+    gameOfLife.Grid[2, 2].IsAlive = true;
+    gameOfLife.Grid[2, 3].IsAlive = true;
+    gameOfLife.Grid[1, 3].IsAlive = true;
+    gameOfLife.Grid[0, 2].IsAlive = true;
+
+    await Task.CompletedTask;
+}
+
+
+    private async Task ToggleCellState(int x, int y)
+    {
+        Console.WriteLine($"Toggling cell state at ({x}, {y})");
+        gameOfLife.Grid[x, y].IsAlive = !gameOfLife.Grid[x, y].IsAlive;
+        await Task.CompletedTask;
+    }
+
+    private void StartGame()
+    {
+        timer = new Timer(UpdateGrid, null, 0, 100); // Adjust the time interval as needed
+    }
+
+    private void StopGame()
+    {
+        timer?.Dispose();
+    }
+
+    private async void UpdateGrid(object state)
+    {
+        gameOfLife.Update();
+        await InvokeAsync(StateHasChanged);
+    }
+}
